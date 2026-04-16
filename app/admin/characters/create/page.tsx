@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { checkAdminAccess } from '@/lib/admin-auth'
 import { extractVoiceFingerprint, type VoiceFingerprint } from '@/lib/voiceFingerprint'
-import { extractFromTranscript, type TranscriptSource } from '@/lib/transcript-formats'
+import { type TranscriptSource } from '@/lib/transcript-formats'
 import { CreatorPersonalityProfile, CreatorPersonalityProfileUpdate, getDefaultPersonalityProfile } from '@/lib/types/creator-profile'
 import PersonalityBuilder from '@/components/admin/PersonalityBuilder'
 
