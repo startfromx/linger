@@ -113,7 +113,7 @@ export default function EditCharacterPage() {
           // Create empty profile from scratch
           const emptyProfile: CreatorPersonalityProfile = {
             id: charData.id,
-            creator_user_id: charData.user_id || '',
+            creator_user_id: charData.user_id || 'unknown',
             display_name: charData.display_name,
             age: charData.age,
             gender: charData.gender || 'female',
