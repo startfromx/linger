@@ -29,12 +29,18 @@ export async function POST(request: NextRequest) {
 
     // Use the raw RPC call with the service role key to execute arbitrary SQL
     // Note: This is a direct database connection approach
-    const { data, error } = await admin.rpc('execute_sql', {
-      sql: sql
-    }).catch(err => {
+    let data = null;
+    let error = null;
+    try {
+      const result = await admin.rpc('execute_sql', {
+        sql: sql
+      });
+      data = result.data;
+      error = result.error;
+    } catch (err: any) {
       // If the execute_sql RPC doesn't exist, we'll handle it gracefully
-      return { data: null, error: { message: err.message } }
-    })
+      error = { message: err.message || 'RPC execute_sql failed' };
+    }
 
     if (error) {
       // The execute_sql RPC might not exist, which is expected

@@ -19,14 +19,17 @@ export async function POST(req: NextRequest) {
       FOR INSERT WITH CHECK (auth.role() = 'authenticated');`;
 
     // Use Supabase's RPC to execute arbitrary SQL
-    const { error } = await supabase.rpc('execute_sql', {
-      query: sql,
-    }).catch(async (err) => {
-      // If the standard rpc fails, try using Supabase SQL directly
-      // This is a workaround since Supabase doesn't expose SQL execution via SDK
-      console.log('RPC execute_sql not available, attempting alternative method');
-      throw err;
-    });
+    let error = null;
+    try {
+      const result = await supabase.rpc('execute_sql', {
+        query: sql,
+      });
+      error = result.error;
+    } catch (err) {
+      // If the standard rpc fails, log and continue
+      console.log('RPC execute_sql not available:', err);
+      error = { message: 'RPC execute_sql failed' };
+    }
 
     if (error) {
       // Policy might already exist - that's fine
