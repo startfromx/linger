@@ -421,8 +421,12 @@ export default function EditCharacterPage() {
                 <h2 className="text-xl font-semibold text-gold mb-4">✨ Personality Profile</h2>
                 <p className="text-gray-400 text-sm mb-4">Edit all personality dimensions</p>
                 <PersonalityBuilder
-                  initialProfile={personalityProfile}
-                  onChange={setPersonalityProfile}
+                  initialProfile={personalityProfile || undefined}
+                  onChange={(updates) => {
+                    setPersonalityProfile((prev) =>
+                      prev ? { ...prev, ...updates } : (updates as CreatorPersonalityProfile)
+                    )
+                  }}
                 />
                 <button
                   onClick={handleSave}
