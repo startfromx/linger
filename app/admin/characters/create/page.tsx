@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context'
 import { checkAdminAccess } from '@/lib/admin-auth'
 import { extractVoiceFingerprint, type VoiceFingerprint } from '@/lib/voiceFingerprint'
 import { type TranscriptSource } from '@/lib/transcript-formats'
-import { CreatorPersonalityProfile, getDefaultPersonalityProfile } from '@/lib/types/creator-profile'
+import { CreatorPersonalityProfile } from '@/lib/types/creator-profile'
 // Build cache buster: v2
 import PersonalityBuilder from '@/components/admin/PersonalityBuilder'
 
