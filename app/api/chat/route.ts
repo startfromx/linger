@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     const systemPrompt = buildSystemPrompt(profile, messageHistory || [])
 
     // Extract reply frequency pattern for message handling
-    const replyFrequencyPattern = profile?.voice_fingerprint?.reply_frequency_pattern || 'single'
+    const replyFrequencyPattern = (profile?.voice_fingerprint as any)?.reply_frequency_pattern || 'single'
 
     // Format messages for API
     const apiMessages = (messageHistory || [])
@@ -97,7 +97,6 @@ export async function POST(req: NextRequest) {
         {
           type: 'text',
           text: systemPrompt,
-          cache_control: { type: 'ephemeral' },
         },
       ],
       messages: apiMessages,
@@ -111,7 +110,7 @@ export async function POST(req: NextRequest) {
     responseText = cleanResponse(responseText)
 
     // ENFORCE: Truncate long responses for "short" pattern creators
-    if (replyFrequencyPattern === 'single' && profile?.voice_fingerprint?.message_length_pattern === 'short') {
+    if (replyFrequencyPattern === 'single' && (profile?.voice_fingerprint as any)?.message_length_pattern === 'short') {
       // For short-message creators, limit response to 1-2 sentences max (~150 chars)
       const sentences = responseText.split(/(?<=[.!?])\s+/)
       if (sentences.length > 2) {
@@ -247,8 +246,8 @@ function buildSystemPrompt(
   } = profile
 
   // Extract communication patterns from voice fingerprint if available
-  const messageLengthPattern = voice_fingerprint?.message_length_pattern || 'medium'
-  const replyFrequencyPattern = voice_fingerprint?.reply_frequency_pattern || 'single'
+  const messageLengthPattern = (voice_fingerprint as any)?.message_length_pattern || 'medium'
+  const replyFrequencyPattern = (voice_fingerprint as any)?.reply_frequency_pattern || 'single'
 
   // ====== IDENTITY SECTION ======
   let identitySection = `You are **${display_name}**`
