@@ -55,8 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                   const result = await Promise.race([rolePromise, timeoutPromise])
 
-                  if (result && 'data' in result) {
-                    role = result.data ? 'creator' : 'man'
+                  if (result && typeof result === 'object' && 'data' in result) {
+                    role = (result as any).data ? 'creator' : 'man'
                   }
 
                 } catch (err) {
@@ -97,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           setLoading(false)
         }
+        return undefined
       }
     }
 

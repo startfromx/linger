@@ -100,7 +100,7 @@ export default function PersonalityBuilder({
 
   const renderSelect = (
     label: string,
-    value: string | undefined,
+    value: string | undefined | null,
     options: Array<{ value: string; label: string }>,
     onChange: (val: string) => void
   ) => (
@@ -110,7 +110,7 @@ export default function PersonalityBuilder({
       </label>
       <select
         value={value || ''}
-        onChange={(e) => onChange(e.target.value || undefined)}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white text-sm"
       >
         <option value="">Select {label.toLowerCase()}...</option>

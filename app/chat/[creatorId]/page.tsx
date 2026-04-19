@@ -13,6 +13,8 @@ interface CreatorProfile {
   display_name: string
   voice_fingerprint: any
   personality_tags: string[]
+  personality_profile?: any
+  creator_settings?: any
 }
 
 interface Message {
@@ -181,7 +183,7 @@ export default function ChatPage() {
   }, [user, authLoading, isMan, creatorId, router])
 
   const sendMessage = async (content: string) => {
-    if (!conversationId || !creator || !content.trim()) return
+    if (!conversationId || !creator || !content.trim() || !user) return
 
     // Check if visitor has credits
     if (credits === null || credits <= 0) {
@@ -408,6 +410,11 @@ export default function ChatPage() {
                 onClick={async () => {
                   if (!waitlistEmail.trim()) {
                     alert('Please enter your email')
+                    return
+                  }
+
+                  if (!user) {
+                    alert('Please sign in to continue')
                     return
                   }
 

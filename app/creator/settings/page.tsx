@@ -180,8 +180,8 @@ export default function CreatorSettings() {
         {activeTab === 'personality' && personalityProfile && (
           <div className="bg-gray-900 rounded-lg p-6 border border-gray-800 mb-6">
             <PersonalityBuilder
-              value={personalityProfile}
-              onChange={setPersonalityProfile}
+              initialProfile={personalityProfile}
+              onChange={(updates) => setPersonalityProfile(prev => prev ? { ...prev, ...updates } : null)}
             />
           </div>
         )}

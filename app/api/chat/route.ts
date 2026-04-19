@@ -429,7 +429,7 @@ You are texting a friend. Just write what you'd actually text.`
   }
 
   // Use emojis from voice fingerprint if available, else fall back to common_emojis
-  const emojisToUse = voice_fingerprint?.emojis?.map(e => e.emoji) || common_emojis || []
+  const emojisToUse = (voice_fingerprint as any)?.emojis?.map((e: any) => e.emoji) || common_emojis || []
   if (emojisToUse.length > 0) {
     quirksSection += `\n- Common emojis: ${emojisToUse.slice(0, 5).join(' ')} (use naturally when it fits)`
   }
