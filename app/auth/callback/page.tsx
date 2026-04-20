@@ -15,15 +15,24 @@ function AuthCallbackContent() {
       try {
         // PKCE flow: exchange authorization code for session
         const code = searchParams.get('code')
+        console.log('Auth callback - code from URL:', code)
+
         if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+          console.log('Exchanging code for session...')
+          const { error: exchangeError, data: exchangeData } = await supabase.auth.exchangeCodeForSession(code)
+          console.log('Exchange result:', { error: exchangeError, data: exchangeData })
+
           if (exchangeError) {
+            console.error('Exchange failed:', exchangeError)
             throw exchangeError
           }
         }
 
         // Now get the authenticated user
+        console.log('Getting user...')
         const { data, error: userError } = await supabase.auth.getUser()
+        console.log('GetUser result:', { error: userError, user: data?.user?.email })
+
         if (userError) throw userError
         if (!data.user) {
           throw new Error('No user found')
