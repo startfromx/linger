@@ -13,26 +13,23 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Wait for Supabase to process the OAuth hash from URL
-        const user = await new Promise<any>((resolve, reject) => {
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-              if (session?.user) {
-                resolve(session.user)
-              }
-            }
-          )
+        // PKCE flow: exchange authorization code for session
+        const code = searchParams.get('code')
+        if (code) {
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+          if (exchangeError) {
+            throw exchangeError
+          }
+        }
 
-          // Timeout after 5 seconds
-          setTimeout(() => {
-            subscription?.unsubscribe()
-            reject(new Error('Session timeout'))
-          }, 5000)
-        })
-
-        if (!user) {
+        // Now get the authenticated user
+        const { data, error: userError } = await supabase.auth.getUser()
+        if (userError) throw userError
+        if (!data.user) {
           throw new Error('No user found')
         }
+
+        const user = data.user
         console.log('Auth callback - User:', user.email)
 
         // Check if they have a creator profile
