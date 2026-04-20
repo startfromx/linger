@@ -13,15 +13,15 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the session from URL hash
-        const { data, error: authError } = await supabase.auth.getSession()
+        // Get the user from OAuth callback
+        const { data, error: authError } = await supabase.auth.getUser()
 
         if (authError) throw authError
-        if (!data.session?.user) {
-          throw new Error('No session found')
+        if (!data.user) {
+          throw new Error('No user found')
         }
 
-        const user = data.session.user
+        const user = data.user
         console.log('Auth callback - User:', user.email)
 
         // Check if they have a creator profile
