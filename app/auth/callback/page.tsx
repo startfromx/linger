@@ -13,15 +13,26 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the user from OAuth callback
-        const { data, error: authError } = await supabase.auth.getUser()
+        // Wait for Supabase to process the OAuth hash from URL
+        const user = await new Promise<any>((resolve, reject) => {
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+              if (session?.user) {
+                resolve(session.user)
+              }
+            }
+          )
 
-        if (authError) throw authError
-        if (!data.user) {
+          // Timeout after 5 seconds
+          setTimeout(() => {
+            subscription?.unsubscribe()
+            reject(new Error('Session timeout'))
+          }, 5000)
+        })
+
+        if (!user) {
           throw new Error('No user found')
         }
-
-        const user = data.user
         console.log('Auth callback - User:', user.email)
 
         // Check if they have a creator profile
