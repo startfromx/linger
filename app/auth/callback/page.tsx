@@ -1,135 +1,97 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
-import { useEffect, useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-
-function AuthCallbackContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        // PKCE flow: exchange authorization code for session
-        const code = searchParams.get('code')
-        console.log('Auth callback - code from URL:', code)
-
-        if (code) {
-          console.log('Exchanging code for session...')
-          const { error: exchangeError, data: exchangeData } = await supabase.auth.exchangeCodeForSession(code)
-          console.log('Exchange result:', { error: exchangeError, data: exchangeData })
-
-          if (exchangeError) {
-            console.error('Exchange failed:', exchangeError)
-            throw exchangeError
+export default async function AuthCallbackPage({
+  searchParams,
+}: {
+  searchParams: { code?: string; error?: string }
+}) {
+  // Create server client with cookie handling
+  const cookieStore = await cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Handle cookie setting errors silently
           }
-        }
-
-        // Now get the authenticated user
-        console.log('Getting user...')
-        const { data, error: userError } = await supabase.auth.getUser()
-        console.log('GetUser result:', { error: userError, user: data?.user?.email })
-
-        if (userError) throw userError
-        if (!data.user) {
-          throw new Error('No user found')
-        }
-
-        const user = data.user
-        console.log('Auth callback - User:', user.email)
-
-        // Check if they have a creator profile
-        const { data: creatorProfile } = await supabase
-          .from('creator_profile')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle()
-
-        if (creatorProfile) {
-          // Already a creator
-          console.log('User is a creator, redirecting to dashboard')
-          router.push('/creator/dashboard')
-          return
-        }
-
-        // Check if they have a visitor profile
-        const { data: visitorProfile } = await supabase
-          .from('male_profile')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle()
-
-        if (visitorProfile) {
-          // Already a visitor
-          console.log('User is a visitor, redirecting to discover')
-          router.push('/discover')
-          return
-        }
-
-        // New user - create visitor profile by default
-        // They can upgrade to creator through onboarding later
-        console.log('New user - creating visitor profile for user_id:', user.id)
-        const { data: insertData, error: insertError } = await supabase.from('male_profile').insert({
-          user_id: user.id,
-          display_name: user.email?.split('@')[0] || 'Visitor',
-          credits_balance: 100,
-        }).select()
-
-        console.log('Insert response - data:', insertData, 'error:', insertError)
-
-        if (insertError) {
-          console.error('Insert error:', insertError)
-          throw new Error(`Failed to create visitor profile: ${insertError.message}`)
-        }
-
-        console.log('Visitor profile created successfully, redirecting to discover')
-        router.push('/discover')
-      } catch (err) {
-        console.error('Auth callback error:', err)
-        setError('Authentication failed. Please try again.')
-        setTimeout(() => router.push('/auth/signin'), 2000)
-      } finally {
-        setLoading(false)
-      }
+        },
+      },
     }
-
-    handleCallback()
-  }, [router, searchParams])
-
-  return (
-    <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-      <div className="text-center">
-        {loading && (
-          <>
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-gold mx-auto mb-4"></div>
-            <p className="text-gray-400">Signing you in...</p>
-          </>
-        )}
-        {error && (
-          <>
-            <p className="text-red-400 mb-2">{error}</p>
-            <p className="text-gray-500 text-sm">Redirecting...</p>
-          </>
-        )}
-      </div>
-    </div>
   )
-}
 
-export default function AuthCallback() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-gold mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    }>
-      <AuthCallbackContent />
-    </Suspense>
-  )
+  // Handle OAuth errors
+  if (searchParams.error) {
+    console.error('OAuth error:', searchParams.error)
+    redirect('/auth/signin')
+  }
+
+  // Exchange code for session
+  if (searchParams.code) {
+    try {
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
+        searchParams.code
+      )
+
+      if (exchangeError) {
+        console.error('Session exchange failed:', exchangeError)
+        redirect('/auth/signin')
+      }
+
+      // Get the authenticated user
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+      if (userError || !user) {
+        console.error('Failed to get user:', userError)
+        redirect('/auth/signin')
+      }
+
+      console.log('User authenticated:', user.email)
+
+      // Check if creator or visitor
+      const { data: creatorProfile } = await supabase
+        .from('creator_profile')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (creatorProfile) {
+        redirect('/creator/dashboard')
+      }
+
+      const { data: visitorProfile } = await supabase
+        .from('male_profile')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (visitorProfile) {
+        redirect('/discover')
+      }
+
+      // Create visitor profile for new user
+      await supabase.from('male_profile').insert({
+        user_id: user.id,
+        display_name: user.email?.split('@')[0] || 'Visitor',
+        credits_balance: 100,
+      })
+
+      redirect('/discover')
+    } catch (error) {
+      console.error('Auth callback error:', error)
+      redirect('/auth/signin')
+    }
+  }
+
+  redirect('/auth/signin')
 }
